@@ -38,7 +38,7 @@ try {
       let over = false;
 
       while (!over) {
-        await sleep(1000);
+        await sleep(5000);
         ssm.getCommandInvocation(
           {
             CommandId: data.Command?.CommandId!,

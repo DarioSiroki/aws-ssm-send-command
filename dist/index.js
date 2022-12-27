@@ -61,7 +61,7 @@ try {
         core.setOutput("command-id", (_a = data.Command) === null || _a === void 0 ? void 0 : _a.CommandId);
         let over = false;
         while (!over) {
-            yield sleep(1000);
+            yield sleep(5000);
             ssm.getCommandInvocation({
                 CommandId: (_b = data.Command) === null || _b === void 0 ? void 0 : _b.CommandId,
                 InstanceId: inputs.instanceIds[0],
