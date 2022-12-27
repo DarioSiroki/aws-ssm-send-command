@@ -18,12 +18,22 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const aws_sdk_1 = __importDefault(require("aws-sdk"));
 const core = __importStar(require("@actions/core"));
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 try {
     const inputs = SanitizeInputs();
     // AWS Configure
@@ -43,13 +53,31 @@ try {
             workingDirectory: [inputs.workingDirectory],
             commands: [inputs.command],
         },
-    }, (err, data) => {
-        var _a;
+    }, (err, data) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a, _b;
         if (err)
             throw err;
         console.log(data);
         core.setOutput("command-id", (_a = data.Command) === null || _a === void 0 ? void 0 : _a.CommandId);
-    });
+        let over = false;
+        while (!over) {
+            yield sleep(1000);
+            ssm.getCommandInvocation({
+                CommandId: (_b = data.Command) === null || _b === void 0 ? void 0 : _b.CommandId,
+                InstanceId: inputs.instanceIds[0],
+            }, (err, data) => {
+                if (err)
+                    throw err;
+                if (!["Success", "Cancelled", "TimedOut", "Failed"].includes(data.Status)) {
+                    console.log(data);
+                }
+                else {
+                    console.log(data);
+                    over = true;
+                }
+            });
+        }
+    }));
 }
 catch (err) {
     console.error(err, err.stack);
