@@ -3,6 +3,8 @@ import * as core from "@actions/core";
 import * as github from "@actions/github";
 import { SendCommandResult } from "aws-sdk/clients/ssm";
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 try {
   const inputs = SanitizeInputs();
 
@@ -26,15 +28,41 @@ try {
         commands: [inputs.command],
       },
     },
-    (err: AWSError, data: SendCommandResult) => {
+    async (err: AWSError, data: SendCommandResult) => {
       if (err) throw err;
 
       console.log(data);
 
       core.setOutput("command-id", data.Command?.CommandId);
+
+      let over = false;
+
+      while (!over) {
+        await sleep(1000);
+        ssm.getCommandInvocation(
+          {
+            CommandId: data.Command?.CommandId!,
+            InstanceId: inputs.instanceIds[0],
+          },
+          (err, data) => {
+            if (err) throw err;
+
+            if (
+              !["Success", "Cancelled", "TimedOut", "Failed"].includes(
+                data.Status!
+              )
+            ) {
+              console.log(data);
+            } else {
+              console.log(data);
+              over = true;
+            }
+          }
+        );
+      }
     }
   );
-} catch (err) {
+} catch (err: any) {
   console.error(err, err.stack);
   core.setFailed(err);
 }
