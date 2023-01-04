@@ -47,7 +47,9 @@ try {
           (err, data) => {
             if (err) throw err;
 
-            if (
+            if (data.Status === "Failed") {
+              throw new Error("Command failed, check the output");
+            } else if (
               !["Success", "Cancelled", "TimedOut", "Failed"].includes(
                 data.Status!
               )
