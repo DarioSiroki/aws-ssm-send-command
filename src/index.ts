@@ -39,28 +39,26 @@ try {
 
       while (!over) {
         await sleep(5000);
-        ssm.getCommandInvocation(
-          {
+        const result = await ssm
+          .getCommandInvocation({
             CommandId: data.Command?.CommandId!,
             InstanceId: inputs.instanceIds[0],
-          },
-          (err, data) => {
-            if (err) throw err;
+          })
+          .promise();
 
-            if (data.Status === "Failed") {
-              throw new Error("Command failed, check the output");
-            } else if (
-              !["Success", "Cancelled", "TimedOut", "Failed"].includes(
-                data.Status!
-              )
-            ) {
-              console.log(data);
-            } else {
-              console.log(data);
-              over = true;
-            }
-          }
-        );
+        if (result.Status === "Failed") {
+          core.setFailed("Command failed, check the output");
+          over = true;
+        } else if (
+          !["Success", "Cancelled", "TimedOut", "Failed"].includes(
+            result.Status!
+          )
+        ) {
+          console.log(data);
+        } else {
+          console.log(data);
+          over = true;
+        }
       }
     }
   );
